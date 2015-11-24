@@ -21,6 +21,7 @@ namespace Microsoft.AspNet.Mvc.Routing
     public class UrlHelper : IUrlHelper
     {
         private readonly IActionContextAccessor _actionContextAccessor;
+        private readonly IActionDescriptorsCollectionProvider _actionDescriptorsCollectionProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UrlHelper"/> class using the specified action context and
@@ -28,9 +29,11 @@ namespace Microsoft.AspNet.Mvc.Routing
         /// </summary>
         /// <param name="actionContextAccessor">The <see cref="IActionContextAccessor"/> to access the action context
         /// of the current request.</param>
-        public UrlHelper(IActionContextAccessor actionContextAccessor)
+        public UrlHelper(IActionContextAccessor actionContextAccessor) 
         {
             _actionContextAccessor = actionContextAccessor;
+            _actionDescriptorsCollectionProvider 
+                = (IActionDescriptorsCollectionProvider)HttpContext.RequestServices.GetService(typeof(IActionDescriptorsCollectionProvider)); // TODO: inject and document
         }
 
         protected IDictionary<string, object> AmbientValues => ActionContext.RouteData.Values;
@@ -119,7 +122,7 @@ namespace Microsoft.AspNet.Mvc.Routing
             string host,
             string fragment) // TODO: convert to UrlActionContext
         {
-            var expressionRouteValues = ExpressionRouteResolver.Resolve(action);
+            var expressionRouteValues = ExpressionRouteResolver.Resolve(action, _actionDescriptorsCollectionProvider);
             if (values != null)
             {
                 var additionalRouteValues = PropertyHelper.ObjectToDictionary(values);
