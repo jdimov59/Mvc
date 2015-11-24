@@ -11,6 +11,9 @@ using Microsoft.Extensions.Internal;
 
 namespace Microsoft.AspNet.Mvc.Routing
 {
+    using System.Linq.Expressions;
+    using Core.Routing;
+
     /// <summary>
     /// An implementation of <see cref="IUrlHelper"/> that contains methods to
     /// build URLs for ASP.NET MVC within an application.
@@ -37,7 +40,7 @@ namespace Microsoft.AspNet.Mvc.Routing
         protected HttpContext HttpContext => ActionContext.HttpContext;
 
         protected IRouter Router => ActionContext.RouteData.Routers[0];
-
+        
         /// <inheritdoc />
         public virtual string Action(UrlActionContext actionContext)
         {
@@ -83,6 +86,59 @@ namespace Microsoft.AspNet.Mvc.Routing
             }
 
             return GenerateUrl(actionContext.Protocol, actionContext.Host, path, actionContext.Fragment);
+        }
+
+        public virtual string Action<TController>(Expression<Action<TController>> action)
+        {
+            return Action(action, values: null, protocol: null, host: null, fragment: null);
+        }
+
+        public virtual string Action<TController>(Expression<Action<TController>> action, object values)
+        {
+            return Action(action, values, protocol: null, host: null, fragment: null);
+        }
+
+        public virtual string Action<TController>(Expression<Action<TController>> action, object values, string protocol)
+        {
+            return Action(action, values, protocol, host: null, fragment: null);
+        }
+
+        public virtual string Action<TController>(
+            Expression<Action<TController>> action,
+            object values,
+            string protocol,
+            string host)
+        {
+            return Action(action, values, protocol, host, fragment: null); // TODO: move to extensions
+        }
+
+        public virtual string Action<TController>(
+            Expression<Action<TController>> action,
+            object values,
+            string protocol,
+            string host,
+            string fragment) // TODO: convert to UrlActionContext
+        {
+            var expressionRouteValues = ExpressionRouteResolver.Resolve(action);
+            if (values != null)
+            {
+                var additionalRouteValues = PropertyHelper.ObjectToDictionary(values);
+
+                foreach (var additionalRouteValue in additionalRouteValues)
+                {
+                    expressionRouteValues.RouteValues[additionalRouteValue.Key] = additionalRouteValue.Value;
+                }
+            }
+
+            return Action(new UrlActionContext
+            {
+                Controller = expressionRouteValues.ControllerName,
+                Action = expressionRouteValues.ActionName,
+                Values = expressionRouteValues,
+                Protocol = protocol,
+                Host = host,
+                Fragment = fragment
+            });
         }
 
         /// <inheritdoc />
