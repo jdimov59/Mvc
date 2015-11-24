@@ -644,15 +644,15 @@ namespace Microsoft.AspNet.Mvc.Infrastructure
 
             serviceContainer.AddService(typeof(IEnumerable<IActionDescriptorProvider>), list);
 
-            var actionCollectionDescriptorProvider = new DefaultActionDescriptorsCollectionProvider(serviceContainer);
-            var decisionTreeProvider = new ActionSelectorDecisionTreeProvider(actionCollectionDescriptorProvider);
+            var actionDescriptorCollectionProvider = new DefaultActionDescriptorsCollectionProvider(serviceContainer);
+            var decisionTreeProvider = new ActionSelectorDecisionTreeProvider(actionDescriptorCollectionProvider);
 
             var actionConstraintProviders = new IActionConstraintProvider[] {
                     new DefaultActionConstraintProvider(),
                 };
 
             var defaultActionSelector = new DefaultActionSelector(
-                actionCollectionDescriptorProvider,
+                actionDescriptorCollectionProvider,
                 decisionTreeProvider,
                 actionConstraintProviders,
                 NullLoggerFactory.Instance);
