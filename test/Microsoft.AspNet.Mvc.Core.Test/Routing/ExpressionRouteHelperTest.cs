@@ -86,6 +86,46 @@ namespace Microsoft.AspNet.Mvc.Core.Test.Routing
             Assert.Equal("Text", model.String);
         }
 
+        [Fact]
+        public void Resolve_PocoController_ControllerActionNameAndParametersAreResolved()
+        {
+            // Arrange
+            var actionDescriptorsCollectionProvider = CreateActionDescriptorsCollectionProvider();
+
+            // Act
+            var result = ExpressionRouteHelper.Resolve<PocoController>(
+                c => c.Action(1),
+                actionDescriptorsCollectionProvider);
+
+            // Assert
+            Assert.Equal("Poco", result.ControllerName);
+            Assert.Equal("Action", result.ActionName);
+            Assert.Equal(1, result.RouteValues.Count);
+            Assert.True(result.RouteValues.ContainsKey("id"));
+            Assert.Equal(1, result.RouteValues["id"]);
+        }
+
+        [Fact]
+        public void Resolve_InAreaController_ControllerActionNameAndAreaAreResolved()
+        {
+            // Arrange
+            var actionDescriptorsCollectionProvider = CreateActionDescriptorsCollectionProvider();
+
+            // Act
+            var result = ExpressionRouteHelper.Resolve<InAreaController>(
+                c => c.Action(1),
+                actionDescriptorsCollectionProvider);
+
+            // Assert
+            Assert.Equal("InArea", result.ControllerName);
+            Assert.Equal("Action", result.ActionName);
+            Assert.Equal(2, result.RouteValues.Count);
+            Assert.True(result.RouteValues.ContainsKey("id"));
+            Assert.Equal(1, result.RouteValues["id"]);
+            Assert.True(result.RouteValues.ContainsKey("area"));
+            Assert.Equal("MyArea", result.RouteValues["area"]);
+        }
+
         public static TheoryData<Expression<Action<NormalController>>, string, string> NormalActionsWithNoParametersData
         {
             get
@@ -198,6 +238,23 @@ namespace Microsoft.AspNet.Mvc.Core.Test.Routing
 
             public void VoidAction()
             {
+            }
+        }
+
+        public class PocoController
+        {
+            public IActionResult Action(int id)
+            {
+                return null;
+            }
+        }
+
+        [Area("MyArea")]
+        public class InAreaController
+        {
+            public IActionResult Action(int id)
+            {
+                return null;
             }
         }
     }

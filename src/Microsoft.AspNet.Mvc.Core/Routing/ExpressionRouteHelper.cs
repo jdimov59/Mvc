@@ -37,64 +37,108 @@ namespace Microsoft.AspNet.Mvc.Core.Routing
                 var controllerType = methodCallExpression.Object?.Type;
                 if (controllerType == null)
                 {
-                    throw new InvalidOperationException(); // TODO: message from resource
+                    // method call is not valid because it is static
+                    throw new InvalidOperationException(); // TODO: message from resource, test exceptions
                 }
 
-                var methodInfo = methodCallExpression.Method; // TODO: ActionName attribute?
+                // TODO: extract methods
+                var methodInfo = methodCallExpression.Method;
 
                 var arguments = methodCallExpression.Arguments.ToArray();
                 var methodParameterNames = methodInfo.GetParameters().Select(p => p.Name).ToArray();
 
                 var additionalRouteValues = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-
-                for (var i = 0; i < arguments.Length; i++)
-                {
-                    var methodParameter = methodParameterNames[i];
-                    var expressionArgument = arguments[i];
-
-                    if (expressionArgument.NodeType == ExpressionType.Constant)
-                    {
-                        var value = ((ConstantExpression)expressionArgument).Value;
-                        if (value != null)
-                        {
-                            additionalRouteValues[methodParameter] = value; // TODO: parameter bindings?
-                        }
-                    }
-                    else
-                    {
-                        var convertExpression = Expression.Convert(expressionArgument, typeof(object));
-                        var value = Expression.Lambda<Func<object>>(convertExpression).Compile().Invoke();
-                        additionalRouteValues[methodParameter] = value; // TODO: parameter bindings?
-                    }
-                }
-
+                
+                // find controller action descriptor from the provider with the same extracted method info
+                // this search is potentially slow, so it is cached after the first lookup
                 var controllerActionDescriptor = _controllerActionDescriptorCache.GetOrAdd(methodInfo, _ =>
                 {
-                    return actionDescriptorsCollectionProvider
+                    var foundControllerActionDescriptor = actionDescriptorsCollectionProvider
                         .ActionDescriptors
                         .Items
                         .OfType<ControllerActionDescriptor>()
                         .FirstOrDefault(ca => ca.MethodInfo == methodInfo);
+
+                    if (foundControllerActionDescriptor == null)
+                    {
+                        throw new InvalidOperationException(); // TODO: message from resource
+                    }
+
+                    return foundControllerActionDescriptor;
                 });
 
-                var defaultRouteValues = controllerActionDescriptor.RouteValueDefaults;
-                foreach (var routeValue in defaultRouteValues) // TODO: maybe foreach is not needed, only area
+                var parameterDescriptors = controllerActionDescriptor
+                    .Parameters
+                    .Where(p => p.BindingInfo != null)
+                    .ToDictionary(p => p.Name, p => p.BindingInfo.BinderModelName);
+
+                for (var i = 0; i < arguments.Length; i++)
                 {
-                    var key = routeValue.Key;
-                    if (!additionalRouteValues.ContainsKey(key))
+                    var methodParameterName = methodParameterNames[i];
+                    if (parameterDescriptors.ContainsKey(methodParameterName))
                     {
-                        additionalRouteValues[key] = defaultRouteValues[key];
+                        methodParameterName = parameterDescriptors[methodParameterName];
+                    }
+
+                    var expressionArgument = arguments[i];
+
+                    object value = null;
+                    if (expressionArgument.NodeType == ExpressionType.Constant)
+                    {
+                        // expression of type c => c.Action({const}) - value can be extracted without compiling
+                        value = ((ConstantExpression)expressionArgument).Value;
+                    }
+                    else
+                    {
+                        // expresion needs compiling because it is not of constant type
+                        var convertExpression = Expression.Convert(expressionArgument, typeof(object));
+                        value = Expression.Lambda<Func<object>>(convertExpression).Compile().Invoke();
+                    }
+
+                    // we are interested only in not null route values 
+                    if (value != null)
+                    {
+                        additionalRouteValues[methodParameterName] = value;
+                    }
+                }
+
+                var controllerName = controllerActionDescriptor.ControllerName;
+                var actionName = controllerActionDescriptor.Name;
+
+                // if there is a route constraint with specific expected value, add it to the result
+                var routeConstraints = controllerActionDescriptor.RouteConstraints;
+                foreach (var routeConstraint in routeConstraints)
+                {
+                    var routeKey = routeConstraint.RouteKey;
+                    var routeValue = routeConstraint.RouteValue;
+
+                    if (routeValue != string.Empty)
+                    {
+                        // override the 'default' values, if they are found
+                        if (string.Equals(routeKey, "controller", StringComparison.OrdinalIgnoreCase))
+                        {
+                            controllerName = routeValue;
+                        }
+                        else if (string.Equals(routeKey, "action", StringComparison.OrdinalIgnoreCase))
+                        {
+                            actionName = routeValue;
+                        }
+                        else
+                        {
+                            additionalRouteValues[routeConstraint.RouteKey] = routeValue;
+                        }
                     }
                 }
                 
                 return new ExpressionRouteValues
                 {
-                    ControllerName = controllerActionDescriptor.ControllerName,
-                    ActionName = controllerActionDescriptor.Name,
+                    ControllerName = controllerName,
+                    ActionName = actionName,
                     RouteValues = additionalRouteValues
                 };
             }
 
+            // expression is invalid because it is not method call
             throw new InvalidOperationException(); // TODO: message resource
         }
     }
