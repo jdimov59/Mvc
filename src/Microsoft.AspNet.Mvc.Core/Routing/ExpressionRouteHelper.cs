@@ -38,7 +38,7 @@ namespace Microsoft.AspNet.Mvc.Core.Routing
                 if (controllerType == null)
                 {
                     // Method call is not valid because it is static.
-                    throw new InvalidOperationException(); // TODO: message from resource, test exceptions
+                    throw new InvalidOperationException(); // TODO: message from resource, unit test exceptions
                 }
                 
                 var methodInfo = methodCallExpression.Method;
@@ -79,8 +79,8 @@ namespace Microsoft.AspNet.Mvc.Core.Routing
                 
                 return new ExpressionRouteValues
                 {
-                    ControllerName = controllerName,
-                    ActionName = actionName,
+                    Controller = controllerName,
+                    Action = actionName,
                     RouteValues = additionalRouteValues
                 };
             }

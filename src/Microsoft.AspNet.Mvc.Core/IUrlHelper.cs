@@ -2,6 +2,8 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using Microsoft.AspNet.Mvc.Routing;
+using System;
+using System.Linq.Expressions;
 
 namespace Microsoft.AspNet.Mvc
 {
@@ -17,6 +19,16 @@ namespace Microsoft.AspNet.Mvc
         /// <param name="actionContext">The context object for the generated URLs for an action method.</param>
         /// <returns>The fully qualified or absolute URL to an action method.</returns>
         string Action(UrlActionContext actionContext);
+
+        /// <summary>
+        /// Generates a fully qualified or absolute URL specified by <see cref="Expression{TDelegate}"/> for an action
+        /// method, from which action name, controller name and route values are resolved and <see cref="UrlActionContext"/> 
+        /// which contains additional route values, protocol to use, host name, and fragment.
+        /// </summary>
+        /// <param name="action"></param>
+        /// <param name="actionContext">The context object for the generated URLs for an action method.</param>
+        /// <returns>The fully qualified or absolute URL to an action method.</returns>
+        string Action<TController>(Expression<Action<TController>> action, UrlActionContext actionContext);
 
         /// <summary>
         /// Converts a virtual (relative) path to an application absolute path.

@@ -33,8 +33,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test.Routing
                 actionDescriptorsCollectionProvider);
 
             // Assert
-            Assert.Equal(controllerName, result.ControllerName);
-            Assert.Equal(actionName, result.ActionName);
+            Assert.Equal(controllerName, result.Controller);
+            Assert.Equal(actionName, result.Action);
             Assert.Empty(result.RouteValues);
         }
 
@@ -52,8 +52,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test.Routing
                 actionDescriptorsCollectionProvider);
 
             // Assert
-            Assert.Equal(controllerName, result.ControllerName);
-            Assert.Equal(actionName, result.ActionName);
+            Assert.Equal(controllerName, result.Controller);
+            Assert.Equal(actionName, result.Action);
             Assert.Equal(routeValues.Count, result.RouteValues.Count);
 
             foreach (var routeValue in routeValues)
@@ -75,8 +75,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test.Routing
                 actionDescriptorsCollectionProvider);
 
             // Assert
-            Assert.Equal("Normal", result.ControllerName);
-            Assert.Equal("ActionWithMultipleParameters", result.ActionName);
+            Assert.Equal("Normal", result.Controller);
+            Assert.Equal("ActionWithMultipleParameters", result.Action);
             Assert.Equal(3, result.RouteValues.Count);
             Assert.Equal(1, result.RouteValues["id"]);
             Assert.Equal("string", result.RouteValues["text"]);
@@ -99,8 +99,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test.Routing
                 actionDescriptorsCollectionProvider);
 
             // Assert
-            Assert.Equal("Poco", result.ControllerName);
-            Assert.Equal("Action", result.ActionName);
+            Assert.Equal("Poco", result.Controller);
+            Assert.Equal("Action", result.Action);
             Assert.Equal(1, result.RouteValues.Count);
             Assert.True(result.RouteValues.ContainsKey("id"));
             Assert.Equal(1, result.RouteValues["id"]);
@@ -118,8 +118,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test.Routing
                 actionDescriptorsCollectionProvider);
 
             // Assert
-            Assert.Equal("InArea", result.ControllerName);
-            Assert.Equal("Action", result.ActionName);
+            Assert.Equal("InArea", result.Controller);
+            Assert.Equal("Action", result.Action);
             Assert.Equal(2, result.RouteValues.Count);
             Assert.True(result.RouteValues.ContainsKey("id"));
             Assert.Equal(1, result.RouteValues["id"]);
@@ -139,8 +139,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test.Routing
                 actionDescriptorsCollectionProvider);
 
             // Assert
-            Assert.Equal("CustomController", result.ControllerName);
-            Assert.Equal("CustomAction", result.ActionName);
+            Assert.Equal("CustomController", result.Controller);
+            Assert.Equal("CustomAction", result.Action);
             Assert.Equal(3, result.RouteValues.Count);
             Assert.True(result.RouteValues.ContainsKey("id"));
             Assert.Equal("5", result.RouteValues["id"]);
@@ -162,8 +162,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test.Routing
                 actionDescriptorsCollectionProvider);
 
             // Assert
-            Assert.Equal("ChangedController", result.ControllerName);
-            Assert.Equal("ChangedAction", result.ActionName);
+            Assert.Equal("ChangedController", result.Controller);
+            Assert.Equal("ChangedAction", result.Action);
             Assert.Equal(1, result.RouteValues.Count);
             Assert.True(result.RouteValues.ContainsKey("ChangedParameter"));
             Assert.Equal(1, result.RouteValues["ChangedParameter"]);

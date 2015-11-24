@@ -7,9 +7,9 @@ namespace Microsoft.AspNet.Mvc.Core.Routing
     
     public class ExpressionRouteValues
     {
-        public string ControllerName { get; set; }
+        public string Controller { get; set; }
 
-        public string ActionName { get; set; }
+        public string Action { get; set; }
 
         public IDictionary<string, object> RouteValues { get; set; }
     }

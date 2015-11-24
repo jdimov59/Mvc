@@ -93,41 +93,18 @@ namespace Microsoft.AspNet.Mvc.Routing
             return GenerateUrl(actionContext.Protocol, actionContext.Host, path, actionContext.Fragment);
         }
 
-        public virtual string Action<TController>(Expression<Action<TController>> action)
-        {
-            return Action(action, values: null, protocol: null, host: null, fragment: null);
-        }
-
-        public virtual string Action<TController>(Expression<Action<TController>> action, object values)
-        {
-            return Action(action, values, protocol: null, host: null, fragment: null);
-        }
-
-        public virtual string Action<TController>(Expression<Action<TController>> action, object values, string protocol)
-        {
-            return Action(action, values, protocol, host: null, fragment: null);
-        }
-
+        /// <inheritdoc />
         public virtual string Action<TController>(
             Expression<Action<TController>> action,
-            object values,
-            string protocol,
-            string host)
-        {
-            return Action(action, values, protocol, host, fragment: null); // TODO: move to extensions
-        }
-
-        public virtual string Action<TController>(
-            Expression<Action<TController>> action,
-            object values,
-            string protocol,
-            string host,
-            string fragment) // TODO: convert to UrlActionContext
+            UrlActionContext actionContext)
         {
             var expressionRouteValues = ExpressionRouteHelper.Resolve(action, _actionDescriptorsCollectionProvider);
-            if (values != null)
+            actionContext.Controller = expressionRouteValues.Controller;
+            actionContext.Action = expressionRouteValues.Action;
+
+            if (actionContext.Values != null)
             {
-                var additionalRouteValues = PropertyHelper.ObjectToDictionary(values);
+                var additionalRouteValues = PropertyHelper.ObjectToDictionary(actionContext.Values);
 
                 foreach (var additionalRouteValue in additionalRouteValues)
                 {
@@ -135,15 +112,9 @@ namespace Microsoft.AspNet.Mvc.Routing
                 }
             }
 
-            return Action(new UrlActionContext
-            {
-                Controller = expressionRouteValues.ControllerName,
-                Action = expressionRouteValues.ActionName,
-                Values = expressionRouteValues,
-                Protocol = protocol,
-                Host = host,
-                Fragment = fragment
-            });
+            actionContext.Values = expressionRouteValues.RouteValues; // TODO: unit test
+
+            return Action(actionContext);
         }
 
         /// <inheritdoc />
