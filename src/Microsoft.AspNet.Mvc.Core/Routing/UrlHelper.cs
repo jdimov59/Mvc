@@ -122,7 +122,7 @@ namespace Microsoft.AspNet.Mvc.Routing
             string host,
             string fragment) // TODO: convert to UrlActionContext
         {
-            var expressionRouteValues = ExpressionRouteResolver.Resolve(action, _actionDescriptorsCollectionProvider);
+            var expressionRouteValues = ExpressionRouteHelper.Resolve(action, _actionDescriptorsCollectionProvider);
             if (values != null)
             {
                 var additionalRouteValues = PropertyHelper.ObjectToDictionary(values);

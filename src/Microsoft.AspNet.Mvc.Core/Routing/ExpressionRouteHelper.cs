@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +12,7 @@ using Microsoft.AspNet.Mvc.Controllers;
 
 namespace Microsoft.AspNet.Mvc.Core.Routing
 {
-    public static class ExpressionRouteResolver
+    public static class ExpressionRouteHelper
     {
         private static readonly ConcurrentDictionary<MethodInfo, ControllerActionDescriptor> _controllerActionDescriptorCache =
             new ConcurrentDictionary<MethodInfo, ControllerActionDescriptor>();
@@ -31,10 +34,10 @@ namespace Microsoft.AspNet.Mvc.Core.Routing
             var methodCallExpression = expression.Body as MethodCallExpression;
             if (methodCallExpression != null)
             {
-                var controllerType = methodCallExpression.Object?.Type; // TODO: area?
+                var controllerType = methodCallExpression.Object?.Type;
                 if (controllerType == null)
                 {
-                    // TODO: throw static method
+                    throw new InvalidOperationException(); // TODO: message from resource
                 }
 
                 var methodInfo = methodCallExpression.Method; // TODO: ActionName attribute?
@@ -75,11 +78,15 @@ namespace Microsoft.AspNet.Mvc.Core.Routing
                 });
 
                 var defaultRouteValues = controllerActionDescriptor.RouteValueDefaults;
-                if (defaultRouteValues.ContainsKey("area"))
+                foreach (var routeValue in defaultRouteValues) // TODO: maybe foreach is not needed, only area
                 {
-                    additionalRouteValues["area"] = defaultRouteValues["area"]; // TODO: anything else?
+                    var key = routeValue.Key;
+                    if (!additionalRouteValues.ContainsKey(key))
+                    {
+                        additionalRouteValues[key] = defaultRouteValues[key];
+                    }
                 }
-
+                
                 return new ExpressionRouteValues
                 {
                     ControllerName = controllerActionDescriptor.ControllerName,
@@ -88,8 +95,7 @@ namespace Microsoft.AspNet.Mvc.Core.Routing
                 };
             }
 
-            // TODO: throw
-            return null;
+            throw new InvalidOperationException(); // TODO: message resource
         }
     }
 }
