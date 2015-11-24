@@ -6,6 +6,7 @@ using Microsoft.AspNet.Mvc.ApplicationModels;
 using Microsoft.AspNet.Mvc.Controllers;
 using Microsoft.AspNet.Mvc.Core.Routing;
 using Microsoft.AspNet.Mvc.Infrastructure;
+using Microsoft.AspNet.Mvc.ModelBinding;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
@@ -126,6 +127,48 @@ namespace Microsoft.AspNet.Mvc.Core.Test.Routing
             Assert.Equal("MyArea", result.RouteValues["area"]);
         }
 
+        [Fact]
+        public void Resolve_ActionWithCustomRouteConstraints_RouteConstraintsAreResolved()
+        {
+            // Arrange
+            var actionDescriptorsCollectionProvider = CreateActionDescriptorsCollectionProvider();
+
+            // Act
+            var result = ExpressionRouteHelper.Resolve<RouteConstraintController>(
+                c => c.Action(1, 2),
+                actionDescriptorsCollectionProvider);
+
+            // Assert
+            Assert.Equal("CustomController", result.ControllerName);
+            Assert.Equal("CustomAction", result.ActionName);
+            Assert.Equal(3, result.RouteValues.Count);
+            Assert.True(result.RouteValues.ContainsKey("id"));
+            Assert.Equal("5", result.RouteValues["id"]);
+            Assert.True(result.RouteValues.ContainsKey("key"));
+            Assert.Equal("value", result.RouteValues["key"]);
+            Assert.True(result.RouteValues.ContainsKey("anotherId"));
+            Assert.Equal(2, result.RouteValues["anotherId"]);
+        }
+
+        [Fact]
+        public void Resolve_CustomConventions_CustomConventionsAreResolved()
+        {
+            // Arrange
+            var actionDescriptorsCollectionProvider = CreateActionDescriptorsCollectionProvider();
+
+            // Act
+            var result = ExpressionRouteHelper.Resolve<ConventionsController>(
+                c => c.ConventionsAction(1),
+                actionDescriptorsCollectionProvider);
+
+            // Assert
+            Assert.Equal("ChangedController", result.ControllerName);
+            Assert.Equal("ChangedAction", result.ActionName);
+            Assert.Equal(1, result.RouteValues.Count);
+            Assert.True(result.RouteValues.ContainsKey("ChangedParameter"));
+            Assert.Equal(1, result.RouteValues["ChangedParameter"]);
+        }
+
         public static TheoryData<Expression<Action<NormalController>>, string, string> NormalActionsWithNoParametersData
         {
             get
@@ -157,13 +200,13 @@ namespace Microsoft.AspNet.Mvc.Core.Test.Routing
                     c => c.ActionWithOverloads(1),
                     controllerName,
                     "ActionWithOverloads",
-                    new Dictionary<string, object> { ["id"] = 1 });
+                    new Dictionary<string, object> {["id"] = 1 });
 
                 data.Add(
                     c => c.ActionWithMultipleParameters(1, "string", null),
                     controllerName,
                     "ActionWithMultipleParameters",
-                    new Dictionary<string, object> { ["id"] = 1, ["text"] = "string" });
+                    new Dictionary<string, object> {["id"] = 1,["text"] = "string" });
 
                 return data;
             }
@@ -171,8 +214,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test.Routing
 
         private IActionDescriptorsCollectionProvider CreateActionDescriptorsCollectionProvider()
         {
-            // run the full controller and action model building 
-            // in order to simulate the default MVC behavior
+            // Run the full controller and action model building 
+            // in order to simulate the default MVC behavior.
             var controllerTypes = typeof(ExpressionRouteHelperTest)
                 .GetNestedTypes()
                 .Select(t => t.GetTypeInfo())
@@ -207,7 +250,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test.Routing
 
             public string String { get; set; }
         }
-        
+
         public class NormalController : Controller
         {
             public IActionResult ActionWithoutParameters()
@@ -255,6 +298,61 @@ namespace Microsoft.AspNet.Mvc.Core.Test.Routing
             public IActionResult Action(int id)
             {
                 return null;
+            }
+        }
+
+        [MyRouteConstraint("controller", "CustomController")]
+        public class RouteConstraintController
+        {
+            [MyRouteConstraint("action", "CustomAction")]
+            [MyRouteConstraint("id", "5")]
+            [MyRouteConstraint("key", "value")]
+            public IActionResult Action(int id, int anotherId)
+            {
+                return null;
+            }
+        }
+
+        [CustomControllerConvention]
+        public class ConventionsController
+        {
+            [CustomActionConvention]
+            public IActionResult ConventionsAction([CustomParameterConvention]int id)
+            {
+                return null;
+            }
+        }
+
+        public class CustomControllerConventionAttribute : Attribute, IControllerModelConvention
+        {
+            public void Apply(ControllerModel controller)
+            {
+                controller.ControllerName = "ChangedController";
+            }
+        }
+
+        public class CustomActionConventionAttribute : Attribute, IActionModelConvention
+        {
+            public void Apply(ActionModel action)
+            {
+                action.ActionName = "ChangedAction";
+            }
+        }
+
+        public class CustomParameterConventionAttribute : Attribute, IParameterModelConvention
+        {
+            public void Apply(ParameterModel parameter)
+            {
+                parameter.BindingInfo = parameter.BindingInfo ?? new BindingInfo();
+                parameter.BindingInfo.BinderModelName = "ChangedParameter";
+            }
+        }
+
+        public class MyRouteConstraintAttribute : RouteConstraintAttribute
+        {
+            public MyRouteConstraintAttribute(string routeKey, string routeValue)
+                : base(routeKey, routeValue, true)
+            {
             }
         }
     }
