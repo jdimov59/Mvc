@@ -3,7 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Diagnostics;
+using Microsoft.AspNet.Mvc.Core.Routing;
 using Microsoft.AspNet.Http;
 using Microsoft.AspNet.Mvc.Infrastructure;
 using Microsoft.AspNet.Routing;
@@ -11,9 +13,6 @@ using Microsoft.Extensions.Internal;
 
 namespace Microsoft.AspNet.Mvc.Routing
 {
-    using System.Linq.Expressions;
-    using Core.Routing;
-
     /// <summary>
     /// An implementation of <see cref="IUrlHelper"/> that contains methods to
     /// build URLs for ASP.NET MVC within an application.
@@ -29,11 +28,14 @@ namespace Microsoft.AspNet.Mvc.Routing
         /// </summary>
         /// <param name="actionContextAccessor">The <see cref="IActionContextAccessor"/> to access the action context
         /// of the current request.</param>
-        public UrlHelper(IActionContextAccessor actionContextAccessor) 
+        public UrlHelper(IActionContextAccessor actionContextAccessor)
         {
             _actionContextAccessor = actionContextAccessor;
-            _actionDescriptorsCollectionProvider 
-                = (IActionDescriptorsCollectionProvider)HttpContext.RequestServices.GetService(typeof(IActionDescriptorsCollectionProvider)); // TODO: inject and document
+
+            // TODO: inject and document
+            var service = HttpContext?.RequestServices?.GetService(typeof(IActionDescriptorsCollectionProvider));
+
+            _actionDescriptorsCollectionProvider = service as IActionDescriptorsCollectionProvider;
         }
 
         protected IDictionary<string, object> AmbientValues => ActionContext.RouteData.Values;
@@ -43,7 +45,7 @@ namespace Microsoft.AspNet.Mvc.Routing
         protected HttpContext HttpContext => ActionContext.HttpContext;
 
         protected IRouter Router => ActionContext.RouteData.Routers[0];
-        
+
         /// <inheritdoc />
         public virtual string Action(UrlActionContext actionContext)
         {
