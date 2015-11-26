@@ -45,7 +45,7 @@ namespace Microsoft.AspNet.Mvc.Core.Routing
 
                 // Find controller action descriptor from the provider with the same extracted method info.
                 // This search is potentially slow, so it is cached after the first lookup.
-                var controllerActionDescriptor = GetActionDescriptorFromCache(methodInfo, actionDescriptorsCollectionProvider);
+                var controllerActionDescriptor = GetControllerActionDescriptorFromCache(methodInfo, actionDescriptorsCollectionProvider);
                 
                 var controllerName = controllerActionDescriptor.ControllerName;
                 var actionName = controllerActionDescriptor.Name;
@@ -89,12 +89,13 @@ namespace Microsoft.AspNet.Mvc.Core.Routing
             throw new InvalidOperationException(); // TODO: message from resource, test exceptions
         }
 
-        private static ControllerActionDescriptor GetActionDescriptorFromCache(
+        private static ControllerActionDescriptor GetControllerActionDescriptorFromCache(
             MethodInfo methodInfo,
             IActionDescriptorsCollectionProvider actionDescriptorsCollectionProvider)
         {
             return _controllerActionDescriptorCache.GetOrAdd(methodInfo, _ =>
             {
+                // We are interested only in actions comming from controllers.
                 var foundControllerActionDescriptor = actionDescriptorsCollectionProvider
                     .ActionDescriptors
                     .Items
